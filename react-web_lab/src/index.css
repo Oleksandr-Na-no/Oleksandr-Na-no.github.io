@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+:root {
+  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(255, 255, 255);
+  background-color: #000000;
+}
+
+body {
+  margin: 0;
+  box-sizing: border-box;
+}
+
+a{
+  color: hsl(0, 0%, 0%);
+  text-decoration: none;
+}
+
+a:hover {
+  color: rgb(255, 255, 255);
+}
+
+main{
+  display: flex;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+ul li {
+  margin-bottom: 30px;
+}

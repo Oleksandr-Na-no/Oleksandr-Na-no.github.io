@@ -1,0 +1,92 @@
+.container {
+    max-width: 900px;
+    width: 100%;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-auto-rows: 250px;
+    padding: 10px;
+}
+
+@media screen and (min-width: 700px) {
+    .lesson-1 {
+        grid-row: span 2 / auto;
+        grid-column: span 2 / auto;
+    }
+
+    .lesson-2 {
+        grid-row: span 2 / auto;
+    }
+
+    .lesson-3 {
+        grid-row: span 2 / auto;
+    }
+
+    .lesson-4 {
+        grid-column: span 2 / auto;
+    }
+
+    .lesson-5 {
+        grid-column: span 3 / auto;
+    }
+
+}
+
+@media screen and (min-width: 450px) {
+    .lesson-1 {
+        grid-column: span 2 / auto;
+    }
+
+    .lesson-2 {
+        grid-row: span 2 / auto;
+    }
+
+    /* .lesson-3 {
+
+    } */
+
+    .lesson-4 {
+        grid-row: span 2 / auto;
+    }
+
+    /* .lesson-5 {
+
+    } */
+
+}
+
+.item {
+    position: relative;
+    background-color: var(--primary);
+    color: var(--background);
+    padding: 5px;
+    border-radius: 16px;
+    text-align: center;
+    transition: transform 0.5s, box-shadow 0.5s;
+}
+
+.image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+}
+
+.item:hover {
+    box-shadow: 2px 2px 4px 5px #ffffff54;
+    transform: scale(1.01);
+}
+
+.inside {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    text-align: center;
+    width: 50%;
+}
