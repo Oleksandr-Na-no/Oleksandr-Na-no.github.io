@@ -49,7 +49,7 @@ function AddImageMenu({ isOpen, setIsOpen, setImgList }: Props) {
     <>
       {isOpen && (
         <div className="text-black backdrop-blur-md fixed inset-0 z-[98] flex items-center justify-center">
-          <div className="bg-white p-5 rounded-[10px] flex flex-col items-center gap-5">
+          <div className="bg-white p-5 rounded-md flex flex-col items-center gap-5">
             <label className="text-3xl">Добавити фото</label>
             <input
               ref={fileInputRef}

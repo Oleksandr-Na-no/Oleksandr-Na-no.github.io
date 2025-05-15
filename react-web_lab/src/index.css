@@ -26,8 +26,16 @@ main{
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
+  margin-top: 80px;
 }
 
 ul li {
   margin-bottom: 30px;
+}
+
+@media only screen and (max-width: 650px) {
+  main {
+    margin-top: 50px;
+  }
 }

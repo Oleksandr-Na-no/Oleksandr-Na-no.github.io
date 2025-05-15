@@ -1,7 +1,10 @@
 import styles from "./Header.module.css";
 import {Link} from "react-router-dom";
+import { useAuth } from "../../context/authContext";
 
 function Header() {
+  const { userLoggedIn } = useAuth();
+
   return (
     <header className={styles.topContainer}>
       <Link className={styles.LogoContainer} to="/">
@@ -18,6 +21,15 @@ function Header() {
         <Link className={styles.link} to="/progress">
           Мій прогрес
         </Link>
+        {userLoggedIn ? (
+          <Link className={styles.link} to="/profile">
+            Профіль
+          </Link>
+        ) : (
+          <Link className={styles.loginButton} to="/login">
+            Увійти
+          </Link>
+        )}
       </nav>
     </header>
   );

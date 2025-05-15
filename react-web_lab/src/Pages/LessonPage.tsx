@@ -1,6 +1,8 @@
 import { useParams } from "react-router-dom";
 import { lessons } from "../data/Lessons.ts";
 import { useState, useEffect } from "react";
+import LessonDoneAlert from "../components/LessonDoneAlert.tsx";
+
 
 export type LessonProgress = {
   id: number;
@@ -11,7 +13,6 @@ function LessonPage() {
   //localStorage.removeItem("Progress");
 
   const { id } = useParams();
-
   const lesson = lessons.find((lesson) => lesson.id === Number(id));
 
   if (!lesson) {
@@ -30,7 +31,7 @@ function LessonPage() {
   );
 
   const SetDone = () => {
-    if (isDone) {
+    if (isDone){
       setIsDone(false);
     } else {
       setIsDone(true);
@@ -53,6 +54,7 @@ useEffect(() => {
 
   return (
     <main className="mt-[10vh] flex items-center justify-center p-4">
+      <LessonDoneAlert number={lesson.id} isDone={isDone}/>
       <div className="max-w-xl w-full text-center">
         <h1 className="text-3xl font-bold text-primary mb-4">{lesson.name}</h1>
         <iframe

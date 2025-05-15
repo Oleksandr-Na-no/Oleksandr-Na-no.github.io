@@ -2,7 +2,7 @@ import Footer from "../components/Footer/Footer";
 
 function MainPage() {
   return (
-    <div className="w-full flex flex-col items-center">
+    <div className="mt-[-80px] w-full flex flex-col items-center">
       <div className="w-full max-h-screen overflow-hidden relative">
         <img
           src="/assets/main.jpg"
