@@ -1,51 +1,69 @@
-import { lessons } from "../data/Lessons";
-import { useEffect, useState } from "react";
+// src/components/ProgressTable.tsx
+import React from "react";
+import { format } from "date-fns";
 
-type LessonProgress = {
+export type Lesson = {
   id: number;
-  done: boolean;
+  name: string;
 };
 
-function ProgressTable() {
-  const [progress, setProgress] = useState<LessonProgress[]>([]);
+export interface LessonProgress {
+  completed?: boolean;
+  date: Date | null;
+}
 
-  useEffect(() => {
-    const storedProgress = JSON.parse(
-      localStorage.getItem("Progress") ?? "[]"
-    ) as LessonProgress[];
-    setProgress(storedProgress);
-  }, []);
+export interface LessonsProgressMap {
+  [key: number]: LessonProgress;
+}
 
-  const isDone = (id: number) =>
-    progress.find((p) => p.id === id)?.done ?? false;
+const formatDate = (date: Date | null): string => {
+  if (!date || isNaN(date.getTime())) return "-";
+  try {
+    return format(date, "dd.MM.yyyy");
+  } catch {
+    return "-";
+  }
+};
 
-        // <table className="w-full bg-gray-200 text-sm text-black rounded-lg">
-        //   <tbody>
-        //     <tr className="border-b border-gray-300">
-        //       <td className="px-2 py-1 w-6"></td>
+type ProgressTableProps = {
+  lessons: Lesson[];
+  lessonsProgress: LessonsProgressMap;
+};
 
-  return (
-    <div className="w-full flex flex-col items-center rounded-xl border-2 border-white overflow-hidden">
-      <table className="w-full h-full table-auto text-left">
-        <thead>
-          <tr>
-            <th className="px-4 py-2 w-32">Статус</th>
-            <th className="border-l px-4 py-2">Назва уроку</th>
-          </tr>
-        </thead>
-        <tbody>
-          {lessons.map((lesson) => (
-            <tr key={lesson.id}>
-              <td className="border-t  px-4 py-2 text-center text-xl">
-                {isDone(lesson.id) ? "✅" : "❌"}
+const ProgressTable: React.FC<ProgressTableProps> = ({
+  lessons,
+  lessonsProgress,
+}) => (
+  <div className="w-full flex flex-col items-center rounded-xl border-2 border-white overflow-hidden mt-6">
+    <table className="w-full table-auto text-left">
+      <thead>
+        <tr className="bg-gray-900">
+          <th className="px-4 py-2 w-32 text-center">Статус</th>
+          <th className="border-l px-4 py-2">Назва уроку</th>
+          <th className="border-l px-4 py-2 w-40">Дата</th>
+        </tr>
+      </thead>
+      <tbody>
+        {lessons.map((lesson) => {
+          const progress = lessonsProgress[lesson.id];
+          const done = progress?.completed ?? false;
+          const date = progress?.date ?? null;
+
+          return (
+            <tr key={lesson.id} className="hover:bg-gray-100">
+              <td className="border-t px-4 py-2 text-center text-xl">
+                {done ? "✅" : "❌"}
               </td>
               <td className="border-l border-t px-4 py-2">{lesson.name}</td>
+              <td className="border-l border-t px-4 py-2">
+                {formatDate(date)}
+              </td>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+);
 
 export default ProgressTable;

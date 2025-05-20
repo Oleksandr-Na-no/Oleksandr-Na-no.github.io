@@ -1,11 +1,13 @@
 import Footer from "../components/Footer/Footer";
+import {beckEndServerUrl} from "../../settings.ts";
 
 function MainPage() {
+
   return (
     <div className="mt-[-80px] w-full flex flex-col items-center">
       <div className="w-full max-h-screen overflow-hidden relative">
         <img
-          src="/assets/main.jpg"
+          src={beckEndServerUrl + "/img/main.jpg"}
           alt="Main Page"
           className="w-full h-full [mask-image:linear-gradient(black_10%,transparent)]"
         />

@@ -1,6 +1,7 @@
 import { Lesson } from "../../data/Lessons.ts";
 import style from "./LessonsList.module.css";
 import { Link } from "react-router-dom";
+import { beckEndServerUrl } from "../../../settings.ts";
 
 type Props = {
   lesson: Lesson;
@@ -17,7 +18,7 @@ function LessonCard({ lesson}: Props) {
     <div className={CardClass}>
       <Link to={`/lesson/${lesson.id}`}>
         <img
-          src={lesson.imgPath}
+          src={beckEndServerUrl + lesson.imgPath}
           alt={`Урок ${lesson.id}`}
           className={style.image}
         />

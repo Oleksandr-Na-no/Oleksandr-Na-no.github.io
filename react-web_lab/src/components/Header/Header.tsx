@@ -1,6 +1,7 @@
 import styles from "./Header.module.css";
 import {Link} from "react-router-dom";
 import { useAuth } from "../../context/authContext";
+import { beckEndServerUrl } from "../../../settings.ts";
 
 function Header() {
   const { userLoggedIn } = useAuth();
@@ -8,7 +9,11 @@ function Header() {
   return (
     <header className={styles.topContainer}>
       <Link className={styles.LogoContainer} to="/">
-        <img src="/assets/logo.svg" alt="Logo" className={styles.logo} />
+        <img
+          src={beckEndServerUrl + "/img/logo.svg"}
+          alt="Logo"
+          className={styles.logo}
+        />
         <h1 className={styles.BrandName}>Pohotooo</h1>
       </Link>
       <nav className={styles.TopMenu}>
