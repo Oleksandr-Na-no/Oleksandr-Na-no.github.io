@@ -2,6 +2,7 @@ import { useState } from "react";
 import { doCreateUserWithEmailAndPassword } from "../firebase/auth";
 
 function SignUp() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -17,7 +18,7 @@ function SignUp() {
     }
 
     try {
-      await doCreateUserWithEmailAndPassword(email, password);
+      await doCreateUserWithEmailAndPassword(email, password, name);
     } catch (error: any) {
       setErrorMessage(error.message);
     }
@@ -37,7 +38,14 @@ function SignUp() {
             {errorMessage}
           </div>
         )}
-
+        <input
+          type="text"
+          placeholder="Ім'я"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          className="text-black w-80 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
         <input
           type="email"
           placeholder="Пошта"

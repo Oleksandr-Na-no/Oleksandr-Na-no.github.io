@@ -5,7 +5,7 @@ function SingOut({}: Props) {
   return (
     <div>
       <button
-        className="bg-red-600 rounded-xl p-2 hover:bg-red-500"
+        className="bg-red-600 rounded-xl px-4 py-2 hover:bg-red-500 "
         onClick={() => doSignOut().catch((err) => console.log(err))}
       >
         Вийти

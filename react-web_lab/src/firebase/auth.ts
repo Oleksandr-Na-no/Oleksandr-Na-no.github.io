@@ -1,4 +1,5 @@
 import { auth } from "./firebase";
+
 import {
   signInWithPopup,
   GoogleAuthProvider,
@@ -6,14 +7,28 @@ import {
   createUserWithEmailAndPassword,
   updatePassword,
   sendPasswordResetEmail,
-  sendEmailVerification, // ✅ FIXED
+  sendEmailVerification,
+  updateProfile
 } from "firebase/auth";
 
 export const doCreateUserWithEmailAndPassword = async (
   email: string,
-  password: string
+  password: string,
+  name?: string
 ) => {
-  return createUserWithEmailAndPassword(auth, email, password);
+  const userCredential = await createUserWithEmailAndPassword(
+    auth,
+    email,
+    password
+  );
+
+  if (name) {
+    await updateProfile(userCredential.user, {
+      displayName: name,
+    });
+  }
+
+  return userCredential;
 };
 
 export const doSignInWithEmailAndPassword = async (

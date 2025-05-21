@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  doPasswordReset,
   doSignInWithEmailAndPassword,
   doSignInWithGoogle,
 } from "../firebase/auth";
@@ -18,6 +19,16 @@ function SignIn() {
       setError(err.message);
     }
   };
+
+  function onPasswordReset() {
+    const email = prompt("Введіть свою пошту щоб скинути пароль");
+    if (!email) {
+      alert("Необхідна пошта");
+      return;
+    }
+    doPasswordReset(email);
+    alert("Перевір пошту щоб скинути пароль");
+}
 
   const onGoogleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +82,12 @@ function SignIn() {
             className="w-80 bg-red-500 hover:bg-red-600 text-white py-2 rounded-md transition-all duration-300"
           >
             Увійти з Google
+          </button>
+          <button
+            onClick={onPasswordReset}
+            className="w-80 bg-gray-200 hover:bg-gray-500 text-white py-2 rounded-md transition-all duration-300"
+          >
+            Забув пароль
           </button>
         </div>
       </form>
