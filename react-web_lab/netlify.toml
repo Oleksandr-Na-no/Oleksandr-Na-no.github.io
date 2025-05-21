@@ -1,4 +1,4 @@
 [build]
-  base = "."
-  publish = "dist"
+  base = "react-web_lab"
   command = "npm run build"
+  publish = "react-web_lab/dist"
