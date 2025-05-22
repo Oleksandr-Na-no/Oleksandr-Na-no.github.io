@@ -8,11 +8,35 @@ import ProgressTable, {
 import { useAuth } from "../context/authContext";
 import { beckEndServerUrl } from "../../settings";
 
+// Конвертація Firebase Timestamp або рядка у Date
 const convertFirebaseTimestampToDate = (timestamp: any): Date | null => {
   if (!timestamp) return null;
-  const seconds = timestamp.seconds ?? timestamp._seconds;
-  const date = new Date(seconds * 1000);
-  return isNaN(date.getTime()) ? null : date;
+
+  try {
+    if (
+      timestamp &&
+      typeof timestamp === "object" &&
+      (timestamp.seconds || timestamp._seconds)
+    ) {
+      const seconds = timestamp.seconds ?? timestamp._seconds;
+      const date = new Date(seconds * 1000);
+      return isNaN(date.getTime()) ? null : date;
+    }
+
+    if (typeof timestamp === "string") {
+      const date = new Date(timestamp);
+      return isNaN(date.getTime()) ? null : date;
+    }
+
+    if (timestamp instanceof Date) {
+      return isNaN(timestamp.getTime()) ? null : timestamp;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error converting timestamp:", error);
+    return null;
+  }
 };
 
 function ProgressPage() {
@@ -32,23 +56,45 @@ function ProgressPage() {
 
       try {
         setLoading(true);
-        const progressData = await getAllLessons();
+        const user = getAuth().currentUser;
+        if (!user) return;
 
-        if (progressData) {
-          const normalizedProgress: LessonsProgressMap = {};
-          for (const [key, value] of Object.entries(
-            progressData.userProgress
-          )) {
-            normalizedProgress[Number(key)] = {
-              completed: value.completed,
-              date: convertFirebaseTimestampToDate(value.date),
-            };
-          }
-          setLessonsProgress(normalizedProgress);
-          setAllLessons(progressData.allLessons || []);
+        const token = await getIdToken(user);
+        const response = await fetch(`${beckEndServerUrl}/user/lesson/all`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        const data = await response.json();
+
+        const lessons: Lesson[] = [];
+        const progressMap: LessonsProgressMap = {};
+
+        for (const lesson of data.lessons || []) {
+          const id = Number(lesson.id);
+          if (isNaN(id)) continue;
+
+          lessons.push({
+            id,
+            name: lesson.name,
+          });
+
+          progressMap[id] = {
+            completed: Boolean(lesson.completed),
+            date: convertFirebaseTimestampToDate(lesson.date),
+            dateLine: convertFirebaseTimestampToDate(lesson.dateLine),
+          };
+        }
+
+        setAllLessons(lessons);
+        setLessonsProgress(progressMap);
       } catch (error) {
-        console.error("Error loading lessons:", error);
+        console.error("Error fetching lessons:", error);
       } finally {
         setLoading(false);
       }
@@ -57,37 +103,10 @@ function ProgressPage() {
     fetchLessons();
   }, [userLoggedIn]);
 
-  async function getAllLessons(): Promise<
-    { userProgress: LessonsProgressMap; allLessons: Lesson[] } | undefined
-  > {
-    const user = getAuth().currentUser;
-    if (!user) return { userProgress: {}, allLessons: [] };
-
-    try {
-      const token = await getIdToken(user);
-      const response = await fetch(`${beckEndServerUrl}/user/lesson/all`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`);
-
-      const data = await response.json();
-      return {
-        userProgress: data.userProgress || {},
-        allLessons: data.allLessons || [],
-      };
-    } catch (error) {
-      console.error("Error fetching lessons:", error);
-      return { userProgress: {}, allLessons: [] };
-    }
-  }
-
   const completedCount = Object.values(lessonsProgress).filter(
     (l) => l.completed
   ).length;
+
   const percent =
     allLessons.length > 0 ? (completedCount / allLessons.length) * 100 : 0;
 

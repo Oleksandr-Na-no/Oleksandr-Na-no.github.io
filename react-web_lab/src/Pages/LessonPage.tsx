@@ -6,10 +6,10 @@ import { db } from "../firebase/firebase";
 import LessonDoneAlert from "../components/LessonDoneAlert.tsx";
 import { beckEndServerUrl } from "../../settings.ts";
 
-// Type for lesson progress data
 export type LessonProgress = {
   completed: boolean;
-  date: string | Date;
+  date: string | Date | null;
+  dateLine: string | Date | null;
 };
 
 export type Lesson = {
@@ -20,6 +20,51 @@ export type Lesson = {
   videoLink: string;
 };
 
+// Utility function to safely convert any date-like value to Date
+const convertToDate = (dateValue: any): Date | null => {
+  if (!dateValue) return null;
+
+  // If it's already a Date object
+  if (dateValue instanceof Date) {
+    return isNaN(dateValue.getTime()) ? null : dateValue;
+  }
+
+  // If it's a Firebase Timestamp
+  if (
+    dateValue &&
+    typeof dateValue === "object" &&
+    (dateValue.seconds || dateValue._seconds)
+  ) {
+    const seconds = dateValue.seconds ?? dateValue._seconds;
+    const date = new Date(seconds * 1000);
+    return isNaN(date.getTime()) ? null : date;
+  }
+
+  // If it's a string
+  if (typeof dateValue === "string") {
+    const date = new Date(dateValue);
+    return isNaN(date.getTime()) ? null : date;
+  }
+
+  return null;
+};
+
+// Utility function to safely format date to ISO string
+const safeToISOString = (date: Date | null): string => {
+  if (!date || isNaN(date.getTime())) {
+    return new Date().toISOString();
+  }
+  return date.toISOString();
+};
+
+// Utility function to safely format date for input
+const safeToInputString = (date: Date | null): string => {
+  if (!date || isNaN(date.getTime())) {
+    return new Date().toISOString().split("T")[0];
+  }
+  return date.toISOString().split("T")[0];
+};
+
 function LessonPage() {
   const { id } = useParams();
   const lessonId = Number(id);
@@ -27,9 +72,22 @@ function LessonPage() {
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [isDone, setIsDone] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [updating, setUpdating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [dateLine, setDateLine] = useState<Date | null>(new Date());
 
-  // Fetch lesson details from Firestore
+  const handleDateChange = async (newDate: Date) => {
+    setDateLine(newDate);
+    await updateLessonProgress(undefined, newDate);
+  };
+
+  // Функція для перемикання стану виконання уроку
+  const toggleLessonCompletion = async () => {
+    const newState = !isDone;
+    await updateLessonProgress(newState);
+  };
+
+  // Fetch lesson details
   useEffect(() => {
     const fetchLesson = async () => {
       try {
@@ -58,19 +116,33 @@ function LessonPage() {
     fetchLesson();
   }, [id]);
 
-  // Update lesson progress on server
-  const updateLessonProgress = async (completed: boolean) => {
+  // Update progress
+  const updateLessonProgress = async (
+    newCompletionState?: boolean,
+    customDateLine?: Date
+  ) => {
     setError(null);
+    setUpdating(true);
+
     const user = getAuth().currentUser;
     if (!user) {
       setError("You must be logged in to update lesson progress");
+      setUpdating(false);
       return;
     }
+
+    // Визначаємо стан завершення
+    const completionState =
+      newCompletionState !== undefined ? newCompletionState : isDone;
+
+    // Визначаємо дату дедлайну
+    const effectiveDateLine = customDateLine || dateLine || new Date();
+    const formattedDateLine = safeToISOString(effectiveDateLine);
 
     try {
       const token = await getIdToken(user);
       const response = await fetch(
-        `${beckEndServerUrl}/user/lesson/${lessonId}?state=${completed}`,
+        `${beckEndServerUrl}/user/lesson/${lessonId}?state=${completionState}&dateLine=${formattedDateLine}`,
         {
           method: "POST",
           headers: {
@@ -84,16 +156,20 @@ function LessonPage() {
         throw new Error(errorData.error || "Failed to update lesson progress");
       }
 
-      setIsDone(completed);
+      // Оновлюємо локальний стан тільки після успішного запиту
+      setIsDone(completionState);
+      setDateLine(effectiveDateLine);
     } catch (error) {
       console.error("Error updating lesson progress:", error);
       setError(
         error instanceof Error ? error.message : "An unknown error occurred"
       );
+    } finally {
+      setUpdating(false);
     }
   };
 
-  // Fetch current lesson progress
+  // Fetch current progress
   useEffect(() => {
     const fetchProgress = async () => {
       const user = getAuth().currentUser;
@@ -115,6 +191,7 @@ function LessonPage() {
 
         if (response.status === 404) {
           setIsDone(false);
+          setDateLine(new Date());
           return;
         }
 
@@ -124,7 +201,12 @@ function LessonPage() {
         }
 
         const data = (await response.json()) as LessonProgress;
+
         setIsDone(data.completed);
+
+        // Safely convert dateLine to Date
+        const convertedDateLine = convertToDate(data.dateLine);
+        setDateLine(convertedDateLine || new Date());
       } catch (error) {
         console.error("Error fetching progress:", error);
         setError(
@@ -138,15 +220,12 @@ function LessonPage() {
         fetchProgress();
       } else {
         setIsDone(false);
+        setDateLine(new Date());
       }
     });
 
     return () => unsubscribe();
   }, [lessonId]);
-
-  const toggleLessonStatus = () => {
-    updateLessonProgress(!isDone);
-  };
 
   if (loading) {
     return (
@@ -175,6 +254,7 @@ function LessonPage() {
         )}
 
         <h1 className="text-3xl font-bold text-primary mb-4">{lesson.name}</h1>
+
         <iframe
           className="rounded-md mx-auto mb-6"
           width="560"
@@ -186,17 +266,39 @@ function LessonPage() {
           referrerPolicy="strict-origin-when-cross-origin"
           allowFullScreen
         ></iframe>
+
         <p className="text-primary mb-6">{lesson.text}</p>
-        <button
-          className={
-            "px-4 py-2 text-white rounded-lg text-sm" +
-            (isDone ? " bg-green-500" : " bg-blue-500")
-          }
-          onClick={toggleLessonStatus}
-          disabled={loading}
-        >
-          {isDone ? "Зроблено ✅" : "Позначити як зроблене"}
-        </button>
+
+        <div className="flex justify-center mb-6 gap-2">
+          <button
+            className={
+              "px-4 py-2 text-white rounded-lg text-sm transition-colors " +
+              (isDone
+                ? "bg-green-500 hover:bg-green-600"
+                : "bg-blue-500 hover:bg-blue-600") +
+              (updating ? " opacity-50 cursor-not-allowed" : "")
+            }
+            onClick={toggleLessonCompletion}
+            disabled={updating}
+          >
+            {updating
+              ? "Оновлення..."
+              : isDone
+              ? "Зроблено ✅"
+              : "Позначити як зроблене"}
+          </button>
+
+          <div className="flex items-center bg-blue-500 p-2 rounded-lg text-white">
+            <div className="mr-2">Дедлайн:</div>
+            <input
+              type="date"
+              className="text-black px-2 py-1 rounded"
+              value={safeToInputString(dateLine)}
+              onChange={(e) => handleDateChange(new Date(e.target.value))}
+              disabled={updating}
+            />
+          </div>
+        </div>
       </div>
     </main>
   );
